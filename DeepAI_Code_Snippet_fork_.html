@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="en" class=""><head><script>window.livecodes = window.livecodes || {};</script><title>DeepAI Code Snippet (fork)</title><meta name="title" content="DeepAI Code Snippet (fork)"><meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0"><style id="__livecodes_styles__"></style><script src="https://cdn.jsdelivr.net/npm/es-module-shims@1.10.0/dist/es-module-shims.js" async=""></script><script type="importmap">{
+  "imports": {}
+}</script></head><body>
+
+
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Daywise — Daily Productivity</title>
+  <style>
+    :root {
+      --bg: #f4f6fb;
+      --surface: #fff;
+      --text: #1f2937;
+      --muted: #6b7280;
+      --accent: #5b63e6;
+      --border: #e5e7eb;
+      --green: #16845b;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font: 16px/1.5 system-ui, sans-serif;
+    }
+
+    .app {
+      width: min(760px, calc(100% - 32px));
+      margin: 48px auto;
+    }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: start;
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    h1 { margin: 0; font-size: 2rem; }
+    .subtitle, .date { color: var(--muted); }
+    .date { text-align: right; }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 20px;
+      margin-bottom: 16px;
+      box-shadow: 0 4px 16px #1725540a;
+    }
+
+    .progress-row {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 10px;
+      font-weight: 600;
+    }
+
+    .progress-track {
+      height: 10px;
+      background: #e9eaf5;
+      border-radius: 99px;
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      width: 0;
+      height: 100%;
+      background: var(--accent);
+      transition: width .25s ease;
+    }
+
+    form {
+      display: grid;
+      grid-template-columns: 1fr 140px 150px auto;
+      gap: 10px;
+    }
+
+    input, select, button {
+      font: inherit;
+      border-radius: 9px;
+      padding: 11px 12px;
+    }
+
+    input, select {
+      border: 1px solid var(--border);
+      background: white;
+      color: var(--text);
+      min-width: 0;
+    }
+
+    button {
+      border: 0;
+      background: var(--accent);
+      color: white;
+      font-weight: 650;
+      cursor: pointer;
+    }
+
+    button:hover { filter: brightness(.95); }
+
+    .filters {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 16px;
+    }
+
+    .filter-button {
+      background: transparent;
+      color: var(--muted);
+      border: 1px solid var(--border);
+      padding: 8px 14px;
+    }
+
+    .filter-button[aria-pressed="true"] {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: white;
+    }
+
+    .task-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+
+    .task {
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      align-items: center;
+      gap: 12px;
+      padding: 14px 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .task:last-child { border-bottom: 0; }
+    .task input[type="checkbox"] { width: 19px; height: 19px; accent-color: var(--accent); }
+    .task-title { font-weight: 600; overflow-wrap: anywhere; }
+    .task.done .task-title { text-decoration: line-through; color: var(--muted); }
+    .task-meta { color: var(--muted); font-size: .86rem; }
+    .priority { font-weight: 650; }
+    .priority.High { color: #c2410c; }
+    .priority.Medium { color: #9a6700; }
+    .priority.Low { color: var(--green); }
+
+    .delete {
+      background: transparent;
+      color: var(--muted);
+      padding: 6px 8px;
+    }
+
+    .delete:hover { color: #b42318; }
+    .empty { color: var(--muted); text-align: center; padding: 24px 0; }
+
+    @media (max-width: 650px) {
+      .app { margin: 24px auto; }
+      form { grid-template-columns: 1fr 1fr; }
+      form input[type="text"] { grid-column: 1 / -1; }
+      form button { grid-column: 1 / -1; }
+      header { align-items: flex-start; }
+    }
+
+    @media (max-width: 420px) {
+      .date { font-size: .85rem; }
+      h1 { font-size: 1.65rem; }
+      form { grid-template-columns: 1fr; }
+      form input, form select, form button { grid-column: auto; }
+    }
+  </style>
+
+
+  <main class="app">
+    <header>
+      <div>
+        <h1>Daywise</h1>
+        <div class="subtitle">Make today count, one task at a time.</div>
+      </div>
+      <div class="date" id="today"></div>
+    </header>
+
+    <section class="card" aria-label="Daily progress">
+      <div class="progress-row">
+        <span>Daily progress</span>
+        <span id="progressText">0 of 0 complete</span>
+      </div>
+      <div class="progress-track">
+        <div class="progress-fill" id="progressFill"></div>
+      </div>
+    </section>
+
+    <section class="card">
+      <form id="taskForm">
+        <input id="taskInput" type="text" placeholder="What needs to get done?" required="" maxlength="120">
+        <select id="priorityInput" aria-label="Priority">
+          <option>Medium</option>
+          <option>High</option>
+          <option>Low</option>
+        </select>
+        <input id="dueInput" type="date" aria-label="Due date">
+        <button type="submit">Add task</button>
+      </form>
+    </section>
+
+    <section class="card">
+      <nav class="filters" aria-label="Filter tasks">
+        <button class="filter-button" type="button" data-filter="today" aria-pressed="true">Today</button>
+        <button class="filter-button" type="button" data-filter="upcoming" aria-pressed="false">Upcoming</button>
+        <button class="filter-button" type="button" data-filter="completed" aria-pressed="false">Completed</button>
+      </nav>
+
+      <ul class="task-list" id="taskList"></ul>
+      <div class="empty" id="emptyMessage">No tasks yet. Add one to get started.</div>
+    </section>
+  </main>
+
+  <script>
+    const STORAGE_KEY = "daywise-tasks-v1";
+    const form = document.querySelector("#taskForm");
+    const taskInput = document.querySelector("#taskInput");
+    const priorityInput = document.querySelector("#priorityInput");
+    const dueInput = document.querySelector("#dueInput");
+    const taskList = document.querySelector("#taskList");
+    const emptyMessage = document.querySelector("#emptyMessage");
+    const progressText = document.querySelector("#progressText");
+    const progressFill = document.querySelector("#progressFill");
+    const filterButtons = document.querySelectorAll(".filter-button");
+
+    let tasks = loadTasks();
+    let activeFilter = "today";
+
+    const today = new Date();
+    const todayString = [
+      today.getFullYear(),
+      String(today.getMonth() + 1).padStart(2, "0"),
+      String(today.getDate()).padStart(2, "0")
+    ].join("-");
+
+    document.querySelector("#today").textContent =
+      new Intl.DateTimeFormat(undefined, {
+        weekday: "long", month: "long", day: "numeric"
+      }).format(today);
+
+    function loadTasks() {
+      try {
+        const stored = JSON.parse(localStorage.getItem(STORAGE_KEY));
+        return Array.isArray(stored) ? stored : [];
+      } catch {
+        return [];
+      }
+    }
+
+    function saveTasks() {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks));
+      } catch (error) {
+        console.warn("Could not save tasks in browser storage.", error);
+      }
+    }
+
+    function matchesFilter(task) {
+      if (activeFilter === "completed") return task.done;
+      if (task.done) return false;
+
+      if (activeFilter === "upcoming") {
+        return Boolean(task.due && task.due > todayString);
+      }
+
+      // Today includes overdue and undated tasks.
+      return !task.due || task.due <= todayString;
+    }
+
+    function render() {
+      taskList.replaceChildren();
+
+      const completed = tasks.filter(task => task.done).length;
+      progressText.textContent = `${completed} of ${tasks.length} complete`;
+      progressFill.style.width = tasks.length
+        ? `${(completed / tasks.length) * 100}%`
+        : "0%";
+
+      const visibleTasks = tasks.filter(matchesFilter);
+      emptyMessage.hidden = visibleTasks.length > 0;
+
+      if (!visibleTasks.length) {
+        emptyMessage.textContent = activeFilter === "completed"
+          ? "No completed tasks yet."
+          : activeFilter === "upcoming"
+            ? "No upcoming tasks."
+            : "No tasks for today. Add one to get started.";
+      }
+
+      const rank = { High: 0, Medium: 1, Low: 2 };
+      visibleTasks.sort((a, b) => {
+        if (a.done !== b.done) return Number(a.done) - Number(b.done);
+        return (rank[a.priority] ?? 1) - (rank[b.priority] ?? 1);
+      });
+
+      for (const task of visibleTasks) {
+        const item = document.createElement("li");
+        item.className = `task${task.done ? " done" : ""}`;
+
+        const checkbox = document.createElement("input");
+        checkbox.type = "checkbox";
+        checkbox.checked = task.done;
+        checkbox.setAttribute("aria-label", `Mark ${task.title} complete`);
+        checkbox.addEventListener("change", () => {
+          task.done = checkbox.checked;
+          saveTasks();
+          render();
+        });
+
+        const details = document.createElement("div");
+        const title = document.createElement("div");
+        title.className = "task-title";
+        title.textContent = task.title;
+
+        const meta = document.createElement("div");
+        meta.className = "task-meta";
+
+        const due = task.due
+          ? `Due ${new Intl.DateTimeFormat(undefined, {
+              month: "short", day: "numeric"
+            }).format(new Date(`${task.due}T00:00:00`))}`
+          : "No due date";
+
+        const priority = document.createElement("span");
+        priority.className = `priority ${task.priority}`;
+        priority.textContent = task.priority;
+        meta.append(priority, document.createTextNode(` · ${due}`));
+
+        details.append(title, meta);
+
+        const remove = document.createElement("button");
+        remove.className = "delete";
+        remove.type = "button";
+        remove.textContent = "Delete";
+        remove.setAttribute("aria-label", `Delete ${task.title}`);
+        remove.addEventListener("click", () => {
+          tasks = tasks.filter(item => item.id !== task.id);
+          saveTasks();
+          render();
+        });
+
+        item.append(checkbox, details, remove);
+        taskList.append(item);
+      }
+    }
+
+    filterButtons.forEach(button => {
+      button.addEventListener("click", () => {
+        activeFilter = button.dataset.filter;
+        filterButtons.forEach(item => {
+          item.setAttribute("aria-pressed", String(item === button));
+        });
+        render();
+      });
+    });
+
+    form.addEventListener("submit", event => {
+      event.preventDefault();
+
+      const title = taskInput.value.trim();
+      if (!title) return;
+
+      tasks.push({
+        id: crypto.randomUUID ? crypto.randomUUID() : String(Date.now()),
+        title,
+        priority: priorityInput.value,
+        due: dueInput.value,
+        done: false
+      });
+
+      saveTasks();
+      form.reset();
+      priorityInput.value = "Medium";
+      taskInput.focus();
+      render();
+    });
+
+    render();
+  </script>
+
+<script></script></body></html>
